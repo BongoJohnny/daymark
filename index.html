@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111318">
+  <meta name="description" content="A calm daily planner for tasks, events, habits, goals and notes.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Daymark Planner</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111318; --panel: #191c23; --panel2: #20242d; --line: #303541;
+      --text: #f2f4f8; --muted: #9aa3b3; --accent: #a7c7ff; --accentText: #101722;
+      --green: #9ad9b4; --red: #ff9c9c; --radius: 17px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); min-height: 100vh; }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { max-width: 1440px; margin: auto; padding: 24px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 25px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: var(--accent); color: var(--accentText); font-weight: 900; font-size: 21px; }
+    h1 { font-size: 22px; margin: 0; letter-spacing: -.5px; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .header-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+    .btn { border: 1px solid var(--line); background: var(--panel2); color: var(--text); border-radius: 11px; padding: 10px 13px; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accentText); font-weight: 700; }
+    .btn.small { padding: 7px 10px; font-size: 13px; }
+    .btn:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .nav { display: flex; gap: 7px; overflow-x: auto; padding: 5px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); margin-bottom: 22px; }
+    .nav button { border: 0; background: transparent; color: var(--muted); border-radius: 10px; padding: 10px 15px; white-space: nowrap; }
+    .nav button.active { background: var(--panel2); color: var(--text); }
+    .view { display: none; } .view.active { display: block; }
+    .welcome { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 22px; }
+    .welcome h2 { font-size: clamp(24px, 3vw, 34px); margin: 0 0 7px; letter-spacing: -1px; }
+    .muted { color: var(--muted); } .smalltext { font-size: 13px; }
+    .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
+    .span-3 { grid-column: span 3; } .span-4 { grid-column: span 4; } .span-5 { grid-column: span 5; } .span-6 { grid-column: span 6; } .span-7 { grid-column: span 7; } .span-8 { grid-column: span 8; } .span-12 { grid-column: span 12; }
+    .metric { font-size: 30px; font-weight: 750; margin: 10px 0 4px; letter-spacing: -1px; }
+    .cardhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+    h3 { font-size: 16px; margin: 0; } h4 { margin: 0 0 6px; font-size: 14px; }
+    .list { display: grid; gap: 9px; }
+    .item { display: flex; align-items: flex-start; gap: 10px; padding: 11px; border-radius: 12px; background: var(--panel2); min-width: 0; }
+    .item input[type=checkbox] { accent-color: var(--accent); width: 17px; height: 17px; margin-top: 2px; flex-shrink: 0; }
+    .item-main { flex: 1; min-width: 0; } .item-title { overflow-wrap: anywhere; } .item.done .item-title { color: var(--muted); text-decoration: line-through; }
+    .item-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .item-actions { display: flex; gap: 5px; }
+    .iconbtn { border: 0; color: var(--muted); background: transparent; padding: 3px 5px; border-radius: 6px; }
+    .iconbtn:hover { color: var(--text); background: #343947; }
+    .empty { color: var(--muted); text-align: center; padding: 24px 10px; font-size: 14px; }
+    .progress { height: 7px; border-radius: 9px; background: #303541; overflow: hidden; margin-top: 12px; }
+    .progress > div { height: 100%; background: var(--green); width: 0; transition: width .2s; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .toolbar h2 { margin: 0; font-size: 24px; }
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+    .field { display: grid; gap: 6px; min-width: 0; }
+    label { color: var(--muted); font-size: 12px; }
+    input, textarea, select { width: 100%; background: #11141a; color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; min-width: 0; }
+    textarea { resize: vertical; min-height: 100px; }
+    .formgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .formgrid .wide { grid-column: 1 / -1; }
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 13px; }
+    .calendar-head { display: flex; align-items: center; gap: 10px; }
+    .calendar-head strong { min-width: 145px; text-align: center; }
+    .calendar { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+    .weekday { text-align: center; color: var(--muted); font-size: 12px; padding: 8px 0; }
+    .day { min-height: 105px; padding: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 10px; overflow: hidden; }
+    .day.outside { opacity: .45; } .day.today { border-color: var(--accent); }
+    .daynum { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .eventdot { font-size: 11px; padding: 4px 5px; border-radius: 5px; background: #303c50; color: #c6dcff; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .weekrow { display: grid; grid-template-columns: 80px 1fr; border-bottom: 1px solid var(--line); min-height: 76px; }
+    .weekdate { padding: 12px 6px; color: var(--muted); font-size: 12px; }
+    .weekitems { padding: 9px 0; display: flex; flex-wrap: wrap; gap: 7px; align-content: start; }
+    .pill { padding: 7px 9px; border-radius: 8px; background: #303c50; color: #c6dcff; font-size: 12px; }
+    .habitrow { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+    .habitdays { display: flex; gap: 5px; }
+    .habitday { width: 27px; height: 27px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); font-size: 11px; padding: 0; }
+    .habitday.checked { background: var(--green); color: #102019; border-color: var(--green); }
+    .goalitem { padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .goalmeta { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 8px; }
+    .goal-controls { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+    .goal-controls input[type=range] { padding: 0; accent-color: var(--accent); }
+    .notice { background: #292b25; border: 1px solid #4a4a38; color: #e6dfb2; border-radius: 12px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+    .section-note { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .footer { color: var(--muted); text-align: center; font-size: 12px; padding: 24px 0 8px; }
+    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 18px; width: min(540px, calc(100% - 28px)); padding: 22px; }
+    dialog::backdrop { background: #000a; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); border-radius: 10px; padding: 10px 15px; box-shadow: 0 8px 28px #0005; z-index: 10; display: none; max-width: calc(100% - 30px); }
+    @media (max-width: 900px) { .span-3 { grid-column: span 6; } .span-4,.span-5,.span-7,.span-8 { grid-column: span 6; } }
+    @media (max-width: 620px) {
+      .app { padding: 15px 13px calc(20px + env(safe-area-inset-bottom)); }
+      header { align-items: flex-start; } .logo { width: 38px; height: 38px; }
+      h1 { font-size: 19px; } .subtitle { max-width: 170px; }
+      .header-actions .secondary { display: none; }
+      .nav { margin-left: -2px; margin-right: -2px; }
+      .nav button { padding: 10px 12px; }
+      .welcome { align-items: flex-start; flex-direction: column; }
+      .grid { gap: 11px; } .card { padding: 14px; border-radius: 14px; }
+      .span-3,.span-4,.span-5,.span-6,.span-7,.span-8 { grid-column: span 12; }
+      .formgrid { grid-template-columns: 1fr; } .formgrid .wide { grid-column: auto; }
+      .day { min-height: 72px; padding: 5px; border-radius: 7px; }
+      .calendar { gap: 3px; } .weekday { font-size: 10px; }
+      .eventdot { font-size: 9px; padding: 3px; }
+      .calendar-head strong { min-width: 115px; font-size: 13px; }
+      .habitday { width: 25px; height: 25px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">D</div>
+      <div><h1>Daymark</h1><div class="subtitle">Your day, with a little more clarity.</div></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn secondary" id="exportBtn">Export backup</button>
+      <button class="btn secondary" id="importBtn">Import backup</button>
+      <button class="btn primary" id="quickAddBtn">+ Quick add</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <nav class="nav" aria-label="Main navigation">
+    <button class="active" data-view="dashboard">Overview</button>
+    <button data-view="tasks">To-do</button>
+    <button data-view="calendar">Calendar</button>
+    <button data-view="notes">Notes</button>
+    <button data-view="habits">Habits</button>
+    <button data-view="goals">Goals</button>
+    <button data-view="reminders">Reminders</button>
+  </nav>
+
+  <main>
+    <section class="view active" id="view-dashboard">
+      <div class="welcome">
+        <div><h2 id="greeting">Good morning.</h2><div class="muted" id="todayLabel"></div></div>
+        <button class="btn primary" data-add="task">+ Add a task</button>
+      </div>
+      <div class="grid">
+        <article class="card span-3"><div class="muted smalltext">Tasks left today</div><div class="metric" id="metricTasks">0</div><div class="smalltext muted" id="metricTaskCaption">A fresh start.</div></article>
+        <article class="card span-3"><div class="muted smalltext">Events today</div><div class="metric" id="metricEvents">0</div><div class="smalltext muted">Scheduled in your calendar</div></article>
+        <article class="card span-3"><div class="muted smalltext">Habits checked</div><div class="metric" id="metricHabits">0/0</div><div class="smalltext muted">Today's progress</div></article>
+        <article class="card span-3"><div class="muted smalltext">Goals in progress</div><div class="metric" id="metricGoals">0</div><div class="smalltext muted">Keep moving forward</div></article>
+        <article class="card span-7">
+          <div class="cardhead"><h3>Today's priorities</h3><button class="btn small" data-add="task">Add task</button></div>
+          <div class="list" id="todayTasks"></div>
+        </article>
+        <article class="card span-5">
+          <div class="cardhead"><h3>Coming up</h3><button class="btn small" data-goto="calendar">Calendar</button></div>
+          <div class="list" id="todayEvents"></div>
+        </article>
+        <article class="card span-6">
+          <div class="cardhead"><h3>Next 7 days</h3><button class="btn small" data-goto="calendar">View week</button></div>
+          <div class="list" id="upcomingList"></div>
+        </article>
+        <article class="card span-6">
+          <div class="cardhead"><h3>Today's note</h3><button class="btn small" data-goto="notes">All notes</button></div>
+          <textarea id="dashboardNote" placeholder="What do you want to remember today?"></textarea>
+          <div class="form-actions"><button class="btn small primary" id="saveDashboardNote">Save note</button></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="view" id="view-tasks">
+      <div class="toolbar"><h2>To-do list</h2><button class="btn primary" data-add="task">+ Add task</button></div>
+      <div class="card">
+        <div class="toolbar"><div class="filters"><select id="taskFilter"><option value="all">All tasks</option><option value="open">Outstanding</option><option value="done">Completed</option><option value="today">Due today</option></select><select id="taskSort"><option value="date">Sort by due date</option><option value="priority">Sort by priority</option><option value="created">Recently added</option></select></div><span class="muted smalltext" id="taskCount"></span></div>
+        <div class="list" id="taskList"></div>
+      </div>
+    </section>
+
+    <section class="view" id="view-calendar">
+      <div class="toolbar"><h2>Calendar</h2><button class="btn primary" data-add="event">+ Add event</button></div>
+      <div class="card">
+        <div class="toolbar">
+          <div class="calendar-head"><button class="btn small" id="calPrev" aria-label="Previous period">‹</button><strong id="calendarTitle"></strong><button class="btn small" id="calNext" aria-label="Next period">›</button><button class="btn small" id="calToday">Today</button></div>
+          <div class="filters"><select id="calendarMode"><option value="month">Month</option><option value="week">Week</option><option value="day">Day</option></select></div>
+        </div>
+        <div id="calendarContent"></div>
+      </div>
+      <div class="card" style="margin-top:14px"><div class="cardhead"><h3>All upcoming events</h3><span class="muted smalltext">Tap an event to edit</span></div><div class="list" id="allEvents"></div></div>
+    </section>
+
+    <section class="view" id="view-notes">
+      <div class="toolbar"><h2>Notes</h2><button class="btn primary" id="newNoteBtn">+ New note</button></div>
+      <div class="grid">
+        <article class="card span-4"><h3 id="noteFormTitle">Create a note</h3><form id="noteForm" style="margin-top:14px"><input id="noteId" type="hidden"><div class="field"><label for="noteTitle">Title</label><input id="noteTitle" required placeholder="e.g. Ideas, shopping, thoughts"></div><div class="field" style="margin-top:12px"><label for="noteBody">Note</label><textarea id="noteBody" required placeholder="Write anything you want to keep..."></textarea></div><div class="field" style="margin-top:12px"><label for="noteDate">Date (optional)</label><input id="noteDate" type="date"></div><div class="form-actions"><button class="btn" type="reset" id="clearNote">Clear</button><button class="btn primary" type="submit">Save note</button></div></form></article>
+        <article class="card span-8"><div class="cardhead"><h3>Your notes</h3><span class="muted smalltext" id="noteCount"></span></div><div class="list" id="notesList"></div></article>
+      </div>
+    </section>
+
+    <section class="view" id="view-habits">
+      <div class="toolbar"><h2>Habits</h2><button class="btn primary" data-add="habit">+ Add habit</button></div>
+      <div class="card"><p class="section-note">Tick each day you complete a habit. Your progress is stored in this browser.</p><div id="habitList"></div></div>
+    </section>
+
+    <section class="view" id="view-goals">
+      <div class="toolbar"><h2>Goals</h2><button class="btn primary" data-add="goal">+ Add goal</button></div>
+      <div class="grid"><article class="card span-5"><h3>Create a goal</h3><form id="goalForm" style="margin-top:14px"><div class="field"><label for="goalTitle">Goal</label><input id="goalTitle" required placeholder="What do you want to achieve?"></div><div class="formgrid" style="margin-top:12px"><div class="field"><label for="goalDue">Target date</label><input id="goalDue" type="date"></div><div class="field"><label for="goalProgress">Starting progress (%)</label><input id="goalProgress" type="number" min="0" max="100" value="0"></div></div><div class="form-actions"><button class="btn primary" type="submit">Save goal</button></div></form></article><article class="card span-7"><h3 style="margin-bottom:12px">Your goals</h3><div id="goalList"></div></article></div>
+    </section>
+
+    <section class="view" id="view-reminders">
+      <div class="toolbar"><h2>Reminders</h2><button class="btn primary" data-add="reminder">+ Add reminder</button></div>
+      <div class="notice">Reminders are shown here and on your overview. This version does not send notifications while the browser is closed. Keep important reminders in your phone's built-in reminder app as well.</div>
+      <div class="card"><div class="list" id="reminderList"></div></div>
+    </section>
+  </main>
+  <div class="footer">Daymark Planner · Saved on this device · Export backups regularly</div>
+</div>
+
+<dialog id="itemDialog">
+  <div class="cardhead"><h3 id="dialogTitle">Add item</h3><button class="iconbtn" id="closeDialog" aria-label="Close">✕</button></div>
+  <form id="itemForm">
+    <input type="hidden" id="itemId">
+    <input type="hidden" id="itemType">
+    <div class="formgrid">
+      <div class="field wide"><label for="itemTitle">Title</label><input id="itemTitle" required maxlength="180" placeholder="What do you need to do?"></div>
+      <div class="field" id="dateField"><label for="itemDate">Date</label><input id="itemDate" type="date"></div>
+      <div class="field" id="timeField"><label for="itemTime">Time (optional)</label><input id="itemTime" type="time"></div>
+      <div class="field" id="priorityField"><label for="itemPriority">Priority</label><select id="itemPriority"><option value="normal">Normal</option><option value="high">High</option><option value="low">Low</option></select></div>
+      <div class="field" id="categoryField"><label for="itemCategory">Category</label><select id="itemCategory"><option>Personal</option><option>Work</option><option>Study</option><option>Health</option><option>Errands</option><option>Other</option></select></div>
+      <div class="field wide" id="detailsField"><label for="itemDetails">Details (optional)</label><textarea id="itemDetails" placeholder="Extra details..."></textarea></div>
+    </div>
+    <div class="form-actions"><button type="button" class="btn" id="cancelDialog">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+  </form>
+</dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const today = () => dateKey(new Date());
+  const dateKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const parseDate = s => { const [y,m,d] = (s || today()).split('-').map(Number); return new Date(y,m-1,d,12); };
+  const addDays = (s,n) => { const d=parseDate(s); d.setDate(d.getDate()+n); return dateKey(d); };
+  const fmtDate = (s, opts={weekday:'short', month:'short', day:'numeric'}) => s ? parseDate(s).toLocaleDateString(undefined,opts) : 'No date';
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  const fresh = () => ({tasks:[],events:[],notes:[],habits:[],goals:[],reminders:[],dailyNotes:{},habitChecks:{}});
+  let data = fresh(), calDate = today(), toastTimer;
+  const STORAGE_KEY = 'daymark-planner-v1';
+  try { const saved = localStorage.getItem(STORAGE_KEY); if(saved) data = {...fresh(), ...JSON.parse(saved)}; } catch(e) { console.warn('Could not load saved planner data',e); }
+  function save(){ try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) { notify('Could not save: browser storage may be full. Export a backup.'); } }
+  function notify(msg){ const el=$('toast'); el.textContent=msg; el.style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.style.display='none',2600); }
+  function switchView(name){ document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${name}`)); document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name)); if(name==='calendar') renderCalendar(); window.scrollTo({top:0,behavior:'smooth'}); }
+  function itemHtml(item,type,opts={}) {
+    const date = item.date ? fmtDate(item.date) : '';
+    const meta = [date, item.time, item.category, item.priority && item.priority!=='normal' ? `${item.priority} priority` : ''].filter(Boolean).join(' · ');
+    const done = !!item.done;
+    return `<div class="item ${done?'done':''}"><input type="checkbox" aria-label="Mark ${esc(item.title)} complete" data-action="toggle" data-type="${type}" data-id="${esc(item.id)}" ${done?'checked':''}><div class="item-main"><div class="item-title">${esc(item.title)}</div>${(meta || item.details) ? `<div class="item-meta">${esc(meta)}${item.details ? `${meta?' · ':''}${esc(item.details)}`:''}</div>`:''}</div><div class="item-actions">${opts.edit===false?'':`<button class="iconbtn" title="Edit" data-action="edit" data-type="${type}" data-id="${esc(item.id)}">✎</button>`}<button class="iconbtn" title="Delete" data-action="delete" data-type="${type}" data-id="${esc(item.id)}">×</button></div></div>`;
+  }
+  function empty(msg){ return `<div class="empty">${esc(msg)}</div>`; }
+  function renderDashboard(){
+    const t=today(), tasks=data.tasks.filter(x=>!x.done && (!x.date || x.date<=t));
+    const events=data.events.filter(x=>x.date===t).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const checks=data.habits.filter(h=>data.habitChecks[`${h.id}:${t}`]).length;
+    $('greeting').textContent = (new Date().getHours()<12?'Good morning.':new Date().getHours()<18?'Good afternoon.':'Good evening.');
+    $('todayLabel').textContent = new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+    $('metricTasks').textContent=data.tasks.filter(x=>!x.done).length;
+    $('metricTaskCaption').textContent=`${data.tasks.filter(x=>x.done).length} completed in total`;
+    $('metricEvents').textContent=events.length; $('metricHabits').textContent=`${checks}/${data.habits.length}`; $('metricGoals').textContent=data.goals.filter(g=>g.progress<100).length;
+    $('todayTasks').innerHTML=tasks.length?tasks.slice(0,6).map(x=>itemHtml(x,'task')).join(''):empty('No overdue or due-today tasks. Nice.');
+    $('todayEvents').innerHTML=events.length?events.map(x=>`<div class="item"><div class="item-main"><div class="item-title">${esc(x.title)}</div><div class="item-meta">${esc(x.time||'Time not set')}${x.details?' · '+esc(x.details):''}</div></div><button class="iconbtn" data-action="edit" data-type="event" data-id="${esc(x.id)}">✎</button></div>`).join(''):empty('Nothing scheduled today.');
+    const upcoming=data.events.filter(x=>x.date>=t).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time)).slice(0,5);
+    $('upcomingList').innerHTML=upcoming.length?upcoming.map(x=>`<div class="item"><div class="item-main"><div class="item-title">${esc(x.title)}</div><div class="item-meta">${esc(fmtDate(x.date))}${x.time?' · '+esc(x.time):''}</div></div></div>`).join(''):empty('No upcoming events yet.');
+    $('dashboardNote').value=data.dailyNotes[t]||'';
+  }
+  function renderTasks(){
+    const filter=$('taskFilter').value, sort=$('taskSort').value, t=today(); let list=[...data.tasks];
+    if(filter==='open')list=list.filter(x=>!x.done); if(filter==='done')list=list.filter(x=>x.done); if(filter==='today')list=list.filter(x=>x.date===t);
+    if(sort==='date')list.sort((a,b)=>(a.date||'9999') .localeCompare(b.date||'9999'));
+    if(sort==='priority'){const p={high:0,normal:1,low:2};list.sort((a,b)=>p[a.priority||'normal']-p[b.priority||'normal']);}
+    if(sort==='created')list.sort((a,b)=>(b.created||'').localeCompare(a.created||''));
+    $('taskCount').textContent=`${list.length} task${list.length===1?'':'s'}`;
+    $('taskList').innerHTML=list.length?list.map(x=>itemHtml(x,'task')).join(''):empty('No tasks match this view. Add one to get started.');
+  }
+  function renderCalendar(){
+    const mode=$('calendarMode').value, base=parseDate(calDate), monthStart=new Date(base.getFullYear(),base.getMonth(),1,12);
+    if(mode==='month'){
+      $('calendarTitle').textContent=base.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+      const start=new Date(monthStart); start.setDate(1-((start.getDay()+6)%7));
+      let html=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="weekday">${d}</div>`).join('');
+      for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const key=dateKey(d);const ev=data.events.filter(e=>e.date===key);const tasks=data.tasks.filter(t=>t.date===key&&!t.done);
+        html+=`<div class="day ${d.getMonth()!==base.getMonth()?'outside':''} ${key===today()?'today':''}" data-day="${key}" title="Click to add an event"><div class="daynum">${d.getDate()}</div>${ev.slice(0,2).map(e=>`<div class="eventdot" data-action="edit" data-type="event" data-id="${esc(e.id)}">${esc(e.title)}</div>`).join('')}${tasks.length?`<div class="eventdot">${tasks.length} task${tasks.length===1?'':'s'}</div>`:''}${ev.length>2?`<div class="muted" style="font-size:10px">+${ev.length-2} more</div>`:''}</div>`;
+      }
+      $('calendarContent').innerHTML=`<div class="calendar">${html}</div>`;
+    } else if(mode==='week'){
+      const monday=addDays(calDate,-((parseDate(calDate).getDay()+6)%7)); const sunday=addDays(monday,6);
+      $('calendarTitle').textContent=`${fmtDate(monday,{month:'short',day:'numeric'})} – ${fmtDate(sunday,{month:'short',day:'numeric',year:'numeric'})}`;
+      let html=''; for(let i=0;i<7;i++){const key=addDays(monday,i);const ev=data.events.filter(e=>e.date===key).sort((a,b)=>(a.time||'').localeCompare(b.time||''));const ts=data.tasks.filter(t=>t.date===key&&!t.done);
+        html+=`<div class="weekrow"><div class="weekdate">${esc(fmtDate(key,{weekday:'short',month:'short',day:'numeric'}))}${key===today()?'<br><strong>Today</strong>':''}</div><div class="weekitems">${ev.map(e=>`<button class="pill" data-action="edit" data-type="event" data-id="${esc(e.id)}">${esc(e.time?e.time+' · ':'')}${esc(e.title)}</button>`).join('')}${ts.map(t=>`<span class="pill">Task: ${esc(t.title)}</span>`).join('')}${!ev.length&&!ts.length?'<span class="muted smalltext">Nothing planned</span>':''}</div></div>`;
+      } $('calendarContent').innerHTML=html;
+    } else {
+      $('calendarTitle').textContent=fmtDate(calDate,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+      const ev=data.events.filter(e=>e.date===calDate).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+      const ts=data.tasks.filter(t=>t.date===calDate);
+      $('calendarContent').innerHTML=`<h3 style="margin:12px 0">Events</h3><div class="list">${ev.length?ev.map(x=>itemHtml(x,'event')).join(''):empty('No events on this day.')}</div><h3 style="margin:20px 0 12px">Tasks</h3><div class="list">${ts.length?ts.map(x=>itemHtml(x,'task')).join(''):empty('No tasks due this day.')}</div>`;
+    }
+    const all=data.events.filter(x=>x.date>=today()).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+    $('allEvents').innerHTML=all.length?all.map(x=>itemHtml(x,'event',{edit:true})).join(''):empty('No upcoming events. Add one above.');
+  }
+  function renderNotes(){
+    const notes=[...data.notes].sort((a,b)=>(b.updated||'').localeCompare(a.updated||''));
+    $('noteCount').textContent=`${notes.length} note${notes.length===1?'':'s'}`;
+    $('notesList').innerHTML=notes.length?notes.map(n=>`<div class="item"><div class="item-main"><div class="item-title"><strong>${esc(n.title)}</strong></div><div class="item-meta">${n.date?esc(fmtDate(n.date))+' · ':''}${esc(n.updated?new Date(n.updated).toLocaleDateString(): '')}</div><div style="white-space:pre-wrap;overflow-wrap:anywhere;margin-top:8px;font-size:14px">${esc(n.body)}</div></div><div class="item-actions"><button class="iconbtn" data-action="edit" data-type="note" data-id="${esc(n.id)}">✎</button><button class="iconbtn" data-action="delete" data-type="note" data-id="${esc(n.id)}">×</button></div></div>`).join(''):empty('No notes yet. Create one to keep ideas in one place.');
+  }
+  function renderHabits(){
+    const labels=['M','T','W','T','F','S','S'], t=today();
+    $('habitList').innerHTML=data.habits.length?data.habits.map(h=>`<div class="habitrow"><div><strong>${esc(h.title)}</strong><div class="item-meta">${data.habitChecks[`${h.id}:${t}`]?'Completed today':'Daily habit'}</div></div><div class="habitdays">${Array.from({length:7},(_,i)=>{const key=addDays(t,-((parseDate(t).getDay()+6)%7)+i);const checked=!!data.habitChecks[`${h.id}:${key}`];return `<button class="habitday ${checked?'checked':''}" title="${esc(fmtDate(key))}" data-action="habit-check" data-id="${esc(h.id)}" data-date="${key}">${labels[i]}</button>`;}).join('')}<button class="iconbtn" data-action="delete" data-type="habit" data-id="${esc(h.id)}" title="Delete habit">×</button></div></div>`).join(''):empty('Add a habit you want to build, one day at a time.');
+  }
+  function renderGoals(){
+    $('goalList').innerHTML=data.goals.length?data.goals.map(g=>`<div class="goalitem"><div class="goalmeta"><div><strong>${esc(g.title)}</strong><div class="item-meta">${g.due?'Target: '+esc(fmtDate(g.due,{month:'short',day:'numeric',year:'numeric'})):'No target date'}</div></div><button class="iconbtn" data-action="delete" data-type="goal" data-id="${esc(g.id)}">×</button></div><div class="progress"><div style="width:${Math.max(0,Math.min(100,Number(g.progress)||0))}%"></div></div><div class="goal-controls"><input aria-label="Goal progress" type="range" min="0" max="100" value="${Math.max(0,Math.min(100,Number(g.progress)||0))}" data-action="goal-progress" data-id="${esc(g.id)}"><strong>${Number(g.progress)||0}%</strong>${Number(g.progress)>=100?'<span class="smalltext" style="color:var(--green)">Complete</span>':''}</div></div>`).join(''):empty('Set a goal and track your progress here.');
+  }
+  function renderReminders(){
+    const list=[...data.reminders].sort((a,b)=>(a.date||'9999').concat(a.time||'').localeCompare((b.date||'9999').concat(b.time||'')));
+    $('reminderList').innerHTML=list.length?list.map(r=>itemHtml(r,'reminder')).join(''):empty('No reminders yet. Add one to keep it on your radar.');
+  }
+  function renderAll(){renderDashboard();renderTasks();renderCalendar();renderNotes();renderHabits();renderGoals();renderReminders();}
+  const config={task:{title:'Add task',date:true,time:false,priority:true,category:true,details:true},event:{title:'Add event',date:true,time:true,priority:false,category:true,details:true},reminder:{title:'Add reminder',date:true,time:true,priority:false,category:false,details:true},habit:{title:'Add habit',date:false,time:false,priority:false,category:false,details:false}};
+  function openItem(type,id=null,defaults={}){
+    const cfg=config[type]; if(!cfg)return;
+    const collection=data[type+'s']; const existing=id?collection.find(x=>x.id===id):null;
+    $('itemForm').reset(); $('itemId').value=existing?.id||''; $('itemType').value=type;
+    $('dialogTitle').textContent=existing?`Edit ${type}`:cfg.title;
+    $('itemTitle').value=existing?.title||defaults.title||'';
+    $('itemDate').value=existing?.date||defaults.date||(type==='habit'?'':today());
+    $('itemTime').value=existing?.time||defaults.time||'';
+    $('itemPriority').value=existing?.priority||'normal'; $('itemCategory').value=existing?.category||'Personal'; $('itemDetails').value=existing?.details||'';
+    $('dateField').style.display=cfg.date?'grid':'none'; $('timeField').style.display=cfg.time?'grid':'none'; $('priorityField').style.display=cfg.priority?'grid':'none'; $('categoryField').style.display=cfg.category?'grid':'none'; $('detailsField').style.display=cfg.details?'grid':'none';
+    $('itemDialog').showModal(); $('itemTitle').focus();
+  }
+  function saveItem(e){
+    e.preventDefault();const type=$('itemType').value,id=$('itemId').value, title=$('itemTitle').value.trim();if(!title)return;
+    const cfg=config[type], collection=data[type+'s']; const item={id:id||uid(),title};
+    if(cfg.date)item.date=$('itemDate').value; if(cfg.time)item.time=$('itemTime').value;
+    if(cfg.priority)item.priority=$('itemPriority').value; if(cfg.category)item.category=$('itemCategory').value; if(cfg.details)item.details=$('itemDetails').value.trim();
+    if(type==='task'){item.done=collection.find(x=>x.id===id)?.done||false;item.created=collection.find(x=>x.id===id)?.created||new Date().toISOString();}
+    const idx=collection.findIndex(x=>x.id===item.id);if(idx>=0)collection[idx]=item;else collection.push(item);
+    save();$('itemDialog').close();renderAll();notify(`${type[0].toUpperCase()+type.slice(1)} saved.`);
+  }
+  function deleteItem(type,id){
+    const collection=data[type+'s']; if(!collection)return;
+    const found=collection.find(x=>x.id===id); if(!found)return;
+    if(!confirm(`Delete "${found.title}"?`))return;
+    data[type+'s']=collection.filter(x=>x.id!==id);
+    if(type==='habit')Object.keys(data.habitChecks).forEach(k=>{if(k.startsWith(id+':'))delete data.habitChecks[k];});
+    save();renderAll();notify('Deleted.');
+  }
+  document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+  document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>openItem(b.dataset.add)));
+  document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.goto)));
+  $('quickAddBtn').addEventListener('click',()=>openItem('task'));
+  $('closeDialog').addEventListener('click',()=>$('itemDialog').close()); $('cancelDialog').addEventListener('click',()=>$('itemDialog').close());
+  $('itemForm').addEventListener('submit',saveItem);
+  $('taskFilter').addEventListener('change',renderTasks); $('taskSort').addEventListener('change',renderTasks);
+  $('calendarMode').addEventListener('change',renderCalendar);
+  $('calPrev').addEventListener('click',()=>{const d=parseDate(calDate),m=$('calendarMode').value;if(m==='month')d.setMonth(d.getMonth()-1);else d.setDate(d.getDate()-(m==='week'?7:1));calDate=dateKey(d);renderCalendar();});
+  $('calNext').addEventListener('click',()=>{const d=parseDate(calDate),m=$('calendarMode').value;if(m==='month')d.setMonth(d.getMonth()+1);else d.setDate(d.getDate()+(m==='week'?7:1));calDate=dateKey(d);renderCalendar();});
+  $('calToday').addEventListener('click',()=>{calDate=today();renderCalendar();});
+  $('calendarContent').addEventListener('click',e=>{const day=e.target.closest('[data-day]');if(day&&!e.target.closest('[data-action]')){calDate=day.dataset.day;openItem('event',null,{date:calDate});}});
+  $('saveDashboardNote').addEventListener('click',()=>{data.dailyNotes[today()]=$('dashboardNote').value;save();notify('Today’s note saved.');});
+  $('newNoteBtn').addEventListener('click',()=>{ $('noteForm').reset();$('noteId').value='';$('noteFormTitle').textContent='Create a note';$('noteDate').value=today();$('noteTitle').focus();});
+  $('clearNote').addEventListener('click',()=>{setTimeout(()=>{$('noteId').value='';$('noteFormTitle').textContent='Create a note';},0);});
+  $('noteForm').addEventListener('submit',e=>{e.preventDefault();const id=$('noteId').value;const note={id:id||uid(),title:$('noteTitle').value.trim(),body:$('noteBody').value.trim(),date:$('noteDate').value,updated:new Date().toISOString()};const i=data.notes.findIndex(n=>n.id===id);if(i>=0)data.notes[i]=note;else data.notes.push(note);save();$('noteForm').reset();$('noteId').value='';$('noteFormTitle').textContent='Create a note';renderNotes();notify('Note saved.');});
+  $('goalForm').addEventListener('submit',e=>{e.preventDefault();data.goals.push({id:uid(),title:$('goalTitle').value.trim(),due:$('goalDue').value,progress:Math.max(0,Math.min(100,Number($('goalProgress').value)||0))});save();$('goalForm').reset();$('goalProgress').value=0;renderAll();notify('Goal saved.');});
+  document.body.addEventListener('click',e=>{
+    const b=e.target.closest('[data-action]');if(!b)return;
+    const {action,type,id,date}=b.dataset;
+    if(action==='edit'){
+      if(type==='note'){const n=data.notes.find(x=>x.id===id);if(!n)return;switchView('notes');$('noteId').value=n.id;$('noteTitle').value=n.title;$('noteBody').value=n.body;$('noteDate').value=n.date||'';$('noteFormTitle').textContent='Edit note';$('noteTitle').focus();}
+      else openItem(type,id);
+    }
+    if(action==='delete')deleteItem(type,id);
+    if(action==='toggle'){const x=data[type+'s']?.find(y=>y.id===id);if(x){x.done=b.checked;save();renderAll();}}
+    if(action==='habit-check'){const key=`${id}:${date}`;if(data.habitChecks[key])delete data.habitChecks[key];else data.habitChecks[key]=true;save();renderAll();}
+  });
+  document.body.addEventListener('input',e=>{const el=e.target;if(el.dataset.action==='goal-progress'){const g=data.goals.find(x=>x.id===el.dataset.id);if(g){g.progress=Number(el.value);save();renderGoals();}}});
+  $('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`daymark-backup-${today()}.json`;a.click();URL.revokeObjectURL(url);notify('Backup exported.');});
+  $('importBtn').addEventListener('click',()=>$('importFile').click());
+  $('importFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const incoming=JSON.parse(await file.text());if(!incoming||typeof incoming!=='object'||!Array.isArray(incoming.tasks)||!Array.isArray(incoming.events))throw new Error('That file does not look like a Daymark backup.');if(confirm('Import this backup and replace the planner data currently saved in this browser?')){data={...fresh(),...incoming};save();renderAll();notify('Backup imported.');}}catch(err){alert('Could not import this file. Choose a valid Daymark JSON backup.');}e.target.value='';});
+  renderAll();
+
+  // A service worker is available when the app is hosted over HTTPS or localhost.
+  if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1')) {
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Offline support unavailable',err)));
+  }
+})();
+</script>
+</body>
+</html>
